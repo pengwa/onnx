@@ -51,8 +51,11 @@ void convPoolTypeAndShapeInference(
   }
 
   // don't bother with legacy auto_pad for now
-  if (ctx.getAttribute("auto_pad")) {
-    return;
+  auto attr_proto = ctx.getAttribute("auto_pad");
+  if ((nullptr != attr_proto) && attr_proto->has_s()) {
+    if (attr_proto->s().compare("NOTSET") != 0) {
+      return;
+    }
   }
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
@@ -298,7 +301,7 @@ void maxUnpoolShapeInference(InferenceContext& ctx) {
   // we need at least two inputs to have a shape for this inference.
   if (ctx.getNumInputs() != 2 && ctx.getNumInputs() != 3) {
     fail_type_inference(
-            "MaxUnpool op must have either two or three inputs.");
+        "MaxUnpool op must have either two or three inputs.");
   }
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   if (!hasInputShape(ctx, 0)) {
@@ -340,18 +343,18 @@ void maxUnpoolShapeInference(InferenceContext& ctx) {
   }
 
   if (ctx.getNumInputs() == 3) {
-    // If the third input, output_size, is specified, then use that instead 
+    // If the third input, output_size, is specified, then use that instead
     // of inferring shape from inputs.
     if (hasInputShape(ctx, 2)) {
       auto& output_shape = getInputShape(ctx, 2);
       if (output_shape.dim_size() != 1) {
         fail_type_inference(
-              "'output_shape' must be rank 1 tensor.");
+            "'output_shape' must be rank 1 tensor.");
       }
-      if (output_shape.dim((int)0).has_dim_value() && 
+      if (output_shape.dim((int)0).has_dim_value() &&
           static_cast<int>(output_shape.dim((int)0).dim_value()) != input_shape.dim_size()) {
-          fail_shape_inference(
-                  "'output_shape' must have same number of elements as the shape of input tensor X.");
+        fail_shape_inference(
+            "'output_shape' must have same number of elements as the shape of input tensor X.");
       }
     }
     return; // 'output_shape' is specified as input. Actual shape will be determined at runtime.
@@ -420,8 +423,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OPTIONAL)
         .Attr(
             "pads",
-            pads_doc,
-            AttributeProto::INTS,
+            pads_doc, 
+            AttributeProto::INTS, 
             OPTIONAL)
         .Input(
             0,
@@ -464,8 +467,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T1")
         .TypeConstraint(
             "T1",
-            {"tensor(float16)",
-             "tensor(float)",
+            {"tensor(float16)", 
+             "tensor(float)", 
              "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeConstraint(
@@ -737,8 +740,11 @@ void convTransposeShapeInference(InferenceContext& ctx) {
   }
 
   // don't bother with legacy auto_pad for now
-  if (ctx.getAttribute("auto_pad")) {
-    return;
+  auto attr_proto = ctx.getAttribute("auto_pad");
+  if ((nullptr != attr_proto) && attr_proto->has_s()) {
+    if (attr_proto->s().compare("NOTSET") != 0) {
+      return;
+    }
   }
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
@@ -1151,9 +1157,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             "(training) or the estimated variance (testing) are (C x D1 x ... x Dn).",
             "T")
         .Output(
-            0,
-            "Y",
-            "The output tensor of the same shape as X",
+            0, 
+            "Y", 
+            "The output tensor of the same shape as X", 
             "T")
         .Output(
             1,
